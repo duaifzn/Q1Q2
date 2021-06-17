@@ -1,1 +1,6 @@
-#Q1Q2
+# Q1Q2
+
+
+```console
+npm run test
+```

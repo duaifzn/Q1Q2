@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-server
+  namespace: demo
+  labels:
+    app: demo-server
+spec:
+  containers:
+  - name: demo-server
+    image: duaifzn/demo:1.0
+    ports:
+    - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-server-service
+  namespace: demo
+spec:
+  selector:
+    app: demo-server
+  ports:
+    - port: 3001
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-server-ingress
+  namespace: demo
+spec:
+  rules:
+  - host: "demo.test"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: demo-server-service
+            port:
+              number: 3001
+  

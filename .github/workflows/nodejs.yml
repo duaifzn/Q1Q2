@@ -1,0 +1,63 @@
+name: Nodejs CICD
+
+# 觸發條件
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# 執行一項或多項任務
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14.16.1'
+    - name: Install npm dependencies
+      run: npm install
+    - name: Install Mocha
+      run: npm install -g mocha
+    - name: Install ts-node
+      run: npm install -g ts-node
+    - name: Run Test
+      run: mocha --require ts-node/register src/test/*.ts 
+    # build image
+    # push image
+    # ssh argocd
+    
+
+
+
+# name: Node CI
+
+# on: [push]
+
+# jobs:
+#   build:
+
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - uses: actions/checkout@v1
+#     - name: Install Node.js
+#       uses: actions/setup-node@v1
+#       with:
+#         node-version: '10.x'
+#     - name: Install npm dependencies
+#       run: npm install
+#     - name: Run build task
+#       run: npm run build --if-present
+#     - name: Deploy to Server
+#       uses: easingthemes/ssh-deploy@main
+#       env:
+#           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+#           ARGS: "-rltgoDzvO --delete"
+#           SOURCE: "dist/"
+#           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+#           REMOTE_USER: ${{ secrets.REMOTE_USER }}
+#           TARGET: ${{ secrets.REMOTE_TARGET }}
+#           EXCLUDE: "/dist/, /node_modules/"

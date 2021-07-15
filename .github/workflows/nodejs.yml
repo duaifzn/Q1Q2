@@ -9,83 +9,62 @@ on:
 
 # 執行一項或多項任務
 jobs:
-  build:
+  test-and-build:
     runs-on: ubuntu-latest
     steps:
-    - 
-      uses: actions/checkout@v2
-    - 
-      name: Install Node.js
-      uses: actions/setup-node@v1
-      with:
-        node-version: '14.16.1'
-    - 
-      name: Install npm dependencies
-      run: npm install
-    - 
-      name: Install Mocha
-      run: npm install -g mocha
-    - 
-      name: Install ts-node
-      run: npm install -g ts-node
-    - 
-      name: Run Test
-      run: mocha --require ts-node/register src/test/*.ts 
-    -
-      name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    -
-      name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    -
-      name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-      # build and push image
-    - 
-      name: Build and push
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        push: true
-        tags: duaifzn/demo:1.0
-    -
-      name: Image digest
-      run: echo ${{ steps.docker_build.outputs.digest }}
-      
-    # ssh argocd
-    
+      - uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.16.1'
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Install Mocha
+        run: npm install -g mocha
+
+      - name: Install ts-node
+        run: npm install -g ts-node
+
+      - name: Run Test
+        run: mocha --require ts-node/register src/test/*.ts 
+      # build
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Build
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: duaifzn/demo:1.0
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+
+  Deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Sync ArgoCD Application"
+        uses: omegion/argocd-app-actions@master
+        with:
+          address: ""
+          token: ${{ secrets.ARGOCD_TOKEN }}
+          appName: "guestbook"
+    if: always()
+    needs: ['test-and-build']
 
 
-
-# name: Node CI
-
-# on: [push]
-
-# jobs:
-#   build:
-
-#     runs-on: ubuntu-latest
-
-#     steps:
-#     - uses: actions/checkout@v1
-#     - name: Install Node.js
-#       uses: actions/setup-node@v1
-#       with:
-#         node-version: '10.x'
-#     - name: Install npm dependencies
-#       run: npm install
-#     - name: Run build task
-#       run: npm run build --if-present
-#     - name: Deploy to Server
-#       uses: easingthemes/ssh-deploy@main
-#       env:
-#           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
-#           ARGS: "-rltgoDzvO --delete"
-#           SOURCE: "dist/"
-#           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-#           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-#           TARGET: ${{ secrets.REMOTE_TARGET }}
-#           EXCLUDE: "/dist/, /node_modules/"
+  
